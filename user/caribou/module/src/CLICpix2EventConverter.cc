@@ -21,8 +21,12 @@ bool CLICpix2Event2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
     std::map<std::pair<uint8_t, uint8_t>, caribou::pixelConfig> matrix;
     for(uint8_t x = 0; x < 128; x++) {
       for(uint8_t y = 0; y < 128; y++) {
+	// README:
+	// Choose correct mode for CLICpix2 readout mode.
         // FIXME hard-coded matrix configuration for CLICpix2 - needs to be read from a configuration!
-        matrix[std::make_pair(y,x)] = caribou::pixelConfig(true, 3, true, false, false);
+	//matrix[std::make_pair(y,x)] = caribou::pixelConfig(true, 3, true, false, false); // totcnt mode
+        //matrix[std::make_pair(y,x)] = caribou::pixelConfig(true, 3, false, false, true); // longtoa mode
+	matrix[std::make_pair(y,x)] = caribou::pixelConfig(true, 3, false, false, false); // tottoa mode
       }
     }
     return matrix;
@@ -144,8 +148,29 @@ bool CLICpix2Event2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
   // Create a StandardPlane representing one sensor plane
   eudaq::StandardPlane plane(0, "Caribou", "CLICpix2");
 
+  int cnt_skip = 0;
+  for(const auto& px : data) {
+    auto cp2_pixel = dynamic_cast<caribou::pixelReadout*>(px.second.get());
+    int tot = -1;
+    try {
+      tot = cp2_pixel->GetTOT();
+    } catch(caribou::DataException&) {
+      // Set ToT to one if not defined.                                                                                                                                                                            
+      tot = 1;
+    }
+    if(tot < 2) {
+      cnt_skip++;
+    }
+  }
+
   int i = 0;
-  plane.SetSizeZS(128, 128, data.size());
+  plane.SetSizeZS(128, 128, data.size() - cnt_skip);
+    // README:
+    // This is an ugly hack and works only when toa is available.
+    // Dropping all pixels with tot<2. See also for loop below.
+    // Both if conditions (here and in for loop below) need to match (otherwise wrong array length -> crash)
+    //
+    // Here we check how long the pixel array without pixels with tot < 2 needs to be allocated.
   for(const auto& px : data) {
     auto cp2_pixel = dynamic_cast<caribou::pixelReadout*>(px.second.get());
     int col = px.first.first;
@@ -166,17 +191,21 @@ bool CLICpix2Event2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
     double timestamp = shutter_open;
 
     // Decide whether information is counter of ToA
-    if(matrix[std::make_pair(row, col)].GetCountingMode()) {
-      // FIXME currently we don't use counting mode at all
-      // cnt = cp2_pixel->GetCounter();
-    } else {
-      auto toa = cp2_pixel->GetTOA();
+    //if(matrix[std::make_pair(row, col)].GetCountingMode()) {
+    //  // FIXME currently we don't use counting mode at all
+    //  // cnt = cp2_pixel->GetCounter();
+    //} else {
+    // README:
+    // This is an ugly hack and works only when toa is available.
+    // Dropping all pixels with tot<2. See also for loop above.
+    // Both if conditions (here and in for loop above) need to match (otherwise wrong array length -> crash)
+    auto toa = cp2_pixel->GetTOA();
       // Convert ToA form 100MHz clk into ns and sutract from shutterStopTime
-      timestamp = shutter_close - static_cast<double>(toa) / 0.1;
+    timestamp = shutter_close - static_cast<double>(toa) / 0.1;
+    if(tot > 1) {
+      plane.SetPixel(i, col, row, tot, timestamp);
+      i++;
     }
-
-    plane.SetPixel(i, col, row, tot, timestamp);
-    i++;
   }
 
   // Add the plane to the StandardEvent
