@@ -7,6 +7,7 @@
 #include "dictionaries.h"
 #include "log.h"
 #include "helper.h"
+#include "rpc_error.h"
 
 #include "CMSPixelProducer.hh"
 
@@ -404,7 +405,7 @@ void CMSPixelProducer::RunLoop() {
   int event_id = 0 + shift_trigger_id;
 
   bool bore_sent = false;
-  
+
   // Acquire lock for pxarCore object access:
   std::lock_guard<std::mutex> lck(m_mutex);
 
@@ -516,9 +517,13 @@ void CMSPixelProducer::RunLoop() {
       // No event available in derandomize buffers (DTB RAM), return to
       // scheduler:
       sched_yield();
-      } catch(const pxar::DataException &e) {
-	EUDAQ_WARN(std::string("Data issue detected: ") + e.what());
-      }
+    } catch(const pxar::DataException &e) {
+      EUDAQ_WARN(std::string("Data issue detected: ") + e.what());
+    } catch(const pxar::pxarException &e) {
+      EUDAQ_WARN(std::string("DAQ issue detected: ") + e.what());
+    } catch(const CRpcError &e) {
+      EUDAQ_WARN("Failed DTB RPC call");
+    }
   }
 
   std::cout << "Exiting run loop." << std::endl;
