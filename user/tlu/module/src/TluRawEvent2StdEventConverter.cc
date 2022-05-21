@@ -5,7 +5,10 @@ class TluRawEvent2StdEventConverter: public eudaq::StdEventConverter{
 public:
   bool Converting(eudaq::EventSPC d1, eudaq::StandardEventSP d2, eudaq::ConfigurationSPC conf) const override;
   static const uint32_t m_id_factory = eudaq::cstr2hash("TluRawDataEvent");
+  static int64_t m_runStartTime;
 };
+
+int64_t TluRawEvent2StdEventConverter::m_runStartTime(-1);
 
 namespace{
   auto dummy0 = eudaq::Factory<eudaq::StdEventConverter>::
@@ -126,9 +129,14 @@ bool TluRawEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Standa
   // with combined fineTS: replace the 3lsb of the coarse timestamp with the 3msb of the finets_avg:
   auto ts = static_cast<uint64_t>((25. / 32. * (((coarse_ts << 5) & 0xFFFFFFFFFFFFFF00) + (finets_avg & 0xFF))) * 1000.);
 
+  // store time of the run start
+  if(m_runStartTime < 0){
+    m_runStartTime = ts; // just use one of them for now
+  }
+
   // Set times for StdEvent in picoseconds (timestamps provided in nanoseconds):
-  d2->SetTimeBegin(ts);
-  d2->SetTimeEnd(d1->GetTimestampEnd() * 1000);
+  d2->SetTimeBegin(ts - m_runStartTime);
+  d2->SetTimeEnd(d1->GetTimestampEnd() * 1000 - m_runStartTime);
   d2->SetTimestamp(ts, d1->GetTimestampEnd(), d1->IsFlagTimestamp());
 
   // Identify the detetor type
