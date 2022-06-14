@@ -41,6 +41,10 @@ class PythleyProducer(pyeudaq.Producer):
     def DoStopRun(self):
         print ('DoStopRun')
         self.is_running = 0
+
+        # ramp to V_Sart
+        self.keithley.vramp(self.GetConfigItem("v_start"), self.GetConfigItem("v_step"), 'V')
+        # Switch off
         self.keithley.disable_output();
 
     def DoReset(self):
