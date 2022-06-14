@@ -1,10 +1,8 @@
-#! /usr/bin/env python
+#!/usr/bin/env python3
 # load binary lib/pyeudaq.so
-import pyeudaq
-import time
-
-from Keithley import KeithleySMU2400Series
 import yaml
+import pyeudaq
+from Keithley import KeithleySMU2400Series
 
 class PythleyProducer(pyeudaq.Producer):
     def __init__(self, name, runctrl):
