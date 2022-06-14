@@ -1,5 +1,12 @@
 # Pythley - A Python EUDAQ2 Producer to Control a Keithley
 
+## Prerequisites
+
+- `python -m pip install pySerial`
+- Install yaml: https://pyyaml.org/wiki/PyYAMLDocumentation
+- Keithley connected with RS-232 cable
+- Keithley set to communicate via RS-232, and with baud rate matching that of the configuration file.
+
 ## Starting
 
 Start like this:
