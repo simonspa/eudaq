@@ -8,7 +8,7 @@ import yaml
 
 class PythleyProducer(pyeudaq.Producer):
     def __init__(self, name, runctrl):
-        pyeudaq.Producer.__init__(self, 'PyProducer', name, runctrl)
+        pyeudaq.Producer.__init__(self, name, runctrl)
         self.is_running = 0
         print ('New instance of PythleyProducer')
 

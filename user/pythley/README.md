@@ -1,6 +1,14 @@
 # Pythley - A Python EUDAQ2 Producer to Control a Keithley
 
-# Initialization
+## Starting
+
+Start like this:
+
+```shell
+PYTHONPATH=path/to/eudaq/lib ./PythleyProducer.py --name "vsub" --run-control "tcp://localhost:44000"
+```
+
+## Initialization
 
 Add YAML-style config file:
 
@@ -9,7 +17,7 @@ Add YAML-style config file:
 config_file = "myconfigfile_formykeithley.yml"
 ```
 
-# Configuration
+## Configuration
 
 Add the following parameters to configure the voltage and a voltage ramp, units is volts:
 
