@@ -1,0 +1,52 @@
+Device:
+    Configuration:
+        Device: 2410
+        
+        #use 'COM<n>' for Windows (n is integer)
+        #use '/dev/ttyUSB<n>' for Linux/MAC (n is integer)
+        #might need to: 'sudo chmod a+rw /dev/ttyUSB0'
+        Port: '/dev/ttyUSB2' #USER ONCE
+        Baudrate: 19200
+        TimeOut: 2
+
+        Measure: 'A'
+        # For ComplianceMeasure
+        # For 2400 Series:
+        #     current: from -1.05A to +1.05A
+        #     voltage: from -210V to +210V
+        # For 2410 Series:
+        #     current: from -1.05A to +1.05A
+        #     voltage: from -1100V to +1100V
+        #
+        #0.000105 for the standard 105 µA
+        RangeMeasure:      0.01     # [A] #USER ONCE
+        ComplianceMeasure: 0.000105 # [A] #USER ONCE
+
+        Source: 'V'
+        #For ComplianceSoucre
+        #If Source is 'V' -> from 20 to 160 in 20V steps
+        # For RangeSource
+        # For 2400 Series:
+        #     current: from -1.05A to +1.05A
+        #     voltage: from -210V to +210V
+        # For 2410 Series:
+        #     current: from -1.05A to +1.05A
+        #     voltage: from -1100V to +1100V
+        RangeSource:      10.00 # [V] #USER ONCE
+        ComplianceSource: -2.60 # [V] #USER ONCE
+
+        TriggerCount: 2
+        TriggerDelay: 0.001
+        WaitRead: 0.05
+        SettlingTime: 0.5
+        #To get the display to show sensibly.
+        #Not super important, since we read the current off anyway.
+        AutoRangeMeasure: 'ON'
+        AutoRangeSource: 'ON'
+
+        SettlingTime: 0.1
+SetVoltage:
+    V_Start: 0.00 # [V] #USER ONCE
+    V_Step:  0.25 # [V] #USER ONCE
+    V_Set:  -1.25 # [V] #USER RUN
+OutfileName: "log/I_SubPsub"
