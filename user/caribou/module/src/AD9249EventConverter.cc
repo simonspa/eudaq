@@ -1,3 +1,10 @@
+/**
+ *
+ * Based on python scripts of E. Bushmann (eric.buschmann@cern.ch)
+ *
+ **/
+
+
 #include "CaribouEvent2StdEventConverter.hh"
 
 #include "utils/log.hpp"
@@ -16,6 +23,7 @@ namespace {
 size_t AD9249Event2StdEventConverter::trig_(0);
 bool AD9249Event2StdEventConverter::m_configured(0);
 bool AD9249Event2StdEventConverter::m_useTime(0);
+bool AD9249Event2StdEventConverter::m_useWaveform(0);
 int64_t AD9249Event2StdEventConverter::m_runStartTime(-1);
 int AD9249Event2StdEventConverter::threshold_trig(1000);
 int AD9249Event2StdEventConverter::threshold_low(101);
@@ -71,11 +79,13 @@ bool AD9249Event2StdEventConverter::Converting(
     threshold_trig = conf->Get("threshold_trig", 1000);
     threshold_low = conf->Get("threshold_low", 101);
     m_useTime = conf->Get("use_time_stamp", false);
+    m_useWaveform = conf->Get("use_waveform", false);
 
     EUDAQ_DEBUG( "Using configuration:" );
     EUDAQ_DEBUG( " threshold_low  = " + to_string( threshold_low ));
     EUDAQ_DEBUG( " threshold_trig  = " + to_string( threshold_trig ));
     EUDAQ_DEBUG( " use_time_stamp  = " + to_string( m_useTime ));
+    EUDAQ_DEBUG( "use_waveforms  = " + to_string( m_useWaveform));
 
     m_configured = true;
   }
@@ -154,6 +164,24 @@ bool AD9249Event2StdEventConverter::Converting(
   EUDAQ_DEBUG("_______________ Event " + to_string(ev->GetEventN()) + " trig " +
               to_string(trig_) + " __________");
 
+
+
+  // this we need for full waveforms
+  if(m_useWaveform){
+      //65MHz adc in ps
+      auto binsize = 1000000000000./65000000.;
+      for (size_t ch = 0; ch < waveforms.size(); ch++) {
+          auto waveform = waveforms. at(ch);
+          auto pixel = mapping.at(ch);
+          for(int sample=0; sample < waveform.size(); sample++){
+              plane.PushPixel(pixel.first, pixel.second, waveform.at(sample),
+                              timestamp0+static_cast<uint64_t>(sample*binsize));
+          }
+
+      }
+  // this if we copy a "simple" amplitude
+  } else{
+
   std::map<std::pair<int, int>, std::pair<int, bool>> amplitudes;
   for (size_t ch = 0; ch < waveforms.size(); ch++) {
     auto max = *std::max_element(waveforms[ch].begin(), waveforms[ch].end());
@@ -193,7 +221,7 @@ bool AD9249Event2StdEventConverter::Converting(
       }
     }
   }
-
+}
   // Add the plane to the StandardEvent
   d2->AddPlane(plane);
 
@@ -215,59 +243,3 @@ bool AD9249Event2StdEventConverter::Converting(
   // Indicate that data was successfully converted
   return true;
 }
-
-/*
- *  Erics python reference
- *
-channels = 8
-
-while True:
-    h = file.read(4)
-    header = struct.unpack('HH', h)
-    bursts = header[1]
-    points = 128 * bursts
-    print("Channel", header[0], "Burst", header[1])
-
-    s = file.read(4)
-    size = struct.unpack('I', s)[0]
-    print("Block size", size)
-
-    while size > 0:
-        data = file.read(points*2*channels)
-        print("Reading", points*2*channels, "bytes")
-        size -= points*2*channels
-
-        val = [(i[0] & 0x3FFF) for i in struct.iter_unpack('<H', data)]
-        val2 = np.reshape(val, (channels, -1), order='F')
-
-        aux = [(i[0] >> 14) for i in struct.iter_unpack('<H', data)]
-        aux2 = np.reshape(aux, (-1, channels))
-
-        foo = []
-
-        for i in aux2:
-            if i[-1] & 2:
-                print('trigger')
-
-            if i[-1] & 1:
-                out = 0
-                for j in foo[::-1]:
-                    out <<= 2
-                    out |= j
-                print(out/65000000.0)
-                foo = []
-            foo.extend(i[:-1])
-
-
-        #fig, ax = plt.subplots(2,4, figsize=(16,9), sharex='col', sharey='row')
-        fig, ax = plt.subplots(2,4, figsize=(16,9), sharex='all', sharey='all')
-        for x in range(0, 4):
-            for y in range(0, 2):
-                i = y*4+x
-                channel = i + 8*header[0]
-                ax[y][x].plot(np.arange(0, len(val2[i]))*(1.0/65), val2[i])
-                ax[y][x].set_title('ch {}'.format(channel))
-
-        plt.show()
-
- */
