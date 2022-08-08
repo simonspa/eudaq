@@ -27,6 +27,8 @@ bool AD9249Event2StdEventConverter::m_useWaveform(0);
 int64_t AD9249Event2StdEventConverter::m_runStartTime(-1);
 int AD9249Event2StdEventConverter::threshold_trig(1000);
 int AD9249Event2StdEventConverter::threshold_low(101);
+std::string AD9249Event2StdEventConverter::m_waveform_filename("");
+std::ofstream AD9249Event2StdEventConverter::m_outfile_waveforms;
 
 void AD9249Event2StdEventConverter::decodeChannel(
     const size_t adc, const std::vector<uint8_t> &data, size_t size,
@@ -80,6 +82,7 @@ bool AD9249Event2StdEventConverter::Converting(
     threshold_low = conf->Get("threshold_low", 101);
     m_useTime = conf->Get("use_time_stamp", false);
     m_useWaveform = conf->Get("use_waveform", false);
+    m_waveform_filename = conf->Get("waveform_filename", "");
 
     EUDAQ_DEBUG( "Using configuration:" );
     EUDAQ_DEBUG( " threshold_low  = " + to_string( threshold_low ));
@@ -141,7 +144,7 @@ bool AD9249Event2StdEventConverter::Converting(
                 waveforms, timestamp1);
 
   // store time of the run start
-  if(m_runStartTime < 0){
+  if(trig_ <= 1){
     m_runStartTime = timestamp0; // just use one of them for now
   }
 
@@ -160,6 +163,29 @@ bool AD9249Event2StdEventConverter::Converting(
   // C1, A1, D2, F1
   // C2, E1, B1, B2
   // E2, G1, G2, D1
+
+
+  // print waveforms to file, if a filename is given
+  // this returns false! If you want to change that that remove `trig_++`!!!
+  if(!m_waveform_filename.empty()){
+
+    // Open
+    m_outfile_waveforms.open(m_waveform_filename, std::ios_base::app); // append
+
+    // Print to file
+    for(size_t ch = 0; ch < waveforms.size(); ch++) {
+      m_outfile_waveforms << trig_ << " " << ch << " " << mapping.at(ch).first << " " << mapping.at(ch).second << " : ";
+      auto const& waveform = waveforms.at(ch);
+      for(auto const& sample : waveform) {
+        m_outfile_waveforms << sample << " ";
+      }
+      m_outfile_waveforms << std::endl;
+    }
+
+    m_outfile_waveforms.close();
+    trig_++;
+    return false;
+  }
 
   EUDAQ_DEBUG("_______________ Event " + to_string(ev->GetEventN()) + " trig " +
               to_string(trig_) + " __________");
