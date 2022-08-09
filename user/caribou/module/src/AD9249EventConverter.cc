@@ -199,11 +199,8 @@ bool AD9249Event2StdEventConverter::Converting(
       for (size_t ch = 0; ch < waveforms.size(); ch++) {
           auto waveform = waveforms. at(ch);
           auto pixel = mapping.at(ch);
-          for(int sample=0; sample < waveform.size(); sample++){
-              plane.PushPixel(pixel.first, pixel.second, waveform.at(sample),
-                              timestamp0+static_cast<uint64_t>(sample*binsize));
-          }
-
+          plane.PushPixel(pixel.first, pixel.second, timestamp0);
+          plane.SetWaveform(ch,waveform, timestamp0, binsize, 0);
       }
   // this if we copy a "simple" amplitude
   } else{
