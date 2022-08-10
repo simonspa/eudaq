@@ -157,7 +157,7 @@ void ALPIDERawEvent2StdEventConverter::Dump(const std::vector<uint8_t> &data,siz
   for (size_t j=0;j<data.size();++j) {
     if (i==j)
       sprintf(buf,"%06zX: %02X <-- problem around here?",j,data[j]);
-    else 
+    else
       sprintf(buf,"%06zX: %02X",j,data[j]);
     EUDAQ_WARN(buf);
   }
