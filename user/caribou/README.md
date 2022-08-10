@@ -75,3 +75,15 @@ The following parameters can be passed in the configuration in order to influenc
 
 * `clkdivend2`: Value of clkdivend2 register in ATLASPix specifying the speed of TS2 counter. Default is `7`.
 * `clock_cycle`:  Clock period of the hit timestamps, defaults to `8` (ns). The value needs to be provided in `ns`.
+
+
+### AD9249Event2StdEventConverter
+
+The following parameters can be passed in the configuration in order to influence the decoding behavior of this module:
+
+
+* `threshold_trig`:Threshold in ADC counts to accept waveform as "hit". Defaults to 1000
+* `threshold_low`:  Threshold in ADC counts to add to a cluster with a seed hit with a charge above `threshold_trig`. Defaults to 101
+* `use_time_stamp`: Defines if a time stamp is added to the event. Defaults to `false`
+* "use_waveform": Copy the full waveform with a pixel hit. If set, `threshold_trig` and `threshold_low` are ignored. Defaults to `false`
+* `wavefrom_filename`: Name of a potential file to txt dump the waveforms. Defaultts to "".
