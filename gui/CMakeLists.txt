@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.1.0)
+CMAKE_MINIMUM_REQUIRED(VERSION 3.6.3 FATAL_ERROR)
 include(CMakeDependentOption)
 find_package(Qt5Widgets CONFIG)
 
